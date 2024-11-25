@@ -53,5 +53,4 @@ public class PostThumbController {
         int result = postThumbService.doPostThumb(postId, loginUser);
         return ResultUtils.success(result);
     }
-
 }

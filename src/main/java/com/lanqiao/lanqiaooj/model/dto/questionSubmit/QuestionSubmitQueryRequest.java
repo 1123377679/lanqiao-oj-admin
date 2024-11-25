@@ -1,4 +1,4 @@
-package com.lanqiao.lanqiaooj.model.dto.question;
+package com.lanqiao.lanqiaooj.model.dto.questionSubmit;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -19,42 +19,27 @@ import java.util.List;
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class QuestionQueryRequest extends PageRequest implements Serializable {
+public class QuestionSubmitQueryRequest extends PageRequest implements Serializable {
 
     /**
-     * id
+     * 编程语言
      */
-    private Long id;
+    private String language;
 
     /**
-     * 标题
+     * 判题状态（0 - 待判题、1 - 判题中、2 - 成功、3 - 失败）
      */
-    private String title;
+    private Integer status;
 
     /**
-     * 内容
+     * 题目 id
      */
-    private String content;
-
-    /**
-     * 标签列表（json 数组）
-     */
-    private List<String> tags;
-
-    /**
-     * 题目答案
-     */
-    private String answer;
+    private Long questionId;
 
     /**
      * 创建用户 id
      */
     private Long userId;
-
-    /**
-     * 题目代码模版
-     */
-    private String codeTemplate;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
