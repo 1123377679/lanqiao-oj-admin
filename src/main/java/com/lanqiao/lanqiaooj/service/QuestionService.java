@@ -34,7 +34,7 @@ public interface QuestionService extends IService<Question> {
     QueryWrapper<Question> getQueryWrapper(QuestionQueryRequest postQueryRequest);
 
     /**
-     * 获取帖子封装
+     * 获取题目封装
      *
      * @param post
      * @param request
@@ -43,7 +43,7 @@ public interface QuestionService extends IService<Question> {
     QuestionVO getQuestionVO(Question post, HttpServletRequest request);
 
     /**
-     * 分页获取帖子封装
+     * 分页获取题目封装
      *
      * @param postPage
      * @param request

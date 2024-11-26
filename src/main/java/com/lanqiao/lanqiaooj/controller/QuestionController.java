@@ -2,6 +2,7 @@ package com.lanqiao.lanqiaooj.controller;
 
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.gson.Gson;
 import com.lanqiao.lanqiaooj.annotation.AuthCheck;
 import com.lanqiao.lanqiaooj.common.BaseResponse;
 import com.lanqiao.lanqiaooj.common.DeleteRequest;
@@ -10,10 +11,7 @@ import com.lanqiao.lanqiaooj.common.ResultUtils;
 import com.lanqiao.lanqiaooj.constant.UserConstant;
 import com.lanqiao.lanqiaooj.exception.BusinessException;
 import com.lanqiao.lanqiaooj.exception.ThrowUtils;
-import com.lanqiao.lanqiaooj.model.dto.question.QuestionAddRequest;
-import com.lanqiao.lanqiaooj.model.dto.question.QuestionEditRequest;
-import com.lanqiao.lanqiaooj.model.dto.question.QuestionQueryRequest;
-import com.lanqiao.lanqiaooj.model.dto.question.QuestionUpdateRequest;
+import com.lanqiao.lanqiaooj.model.dto.question.*;
 import com.lanqiao.lanqiaooj.model.entity.Question;
 import com.lanqiao.lanqiaooj.model.entity.User;
 import com.lanqiao.lanqiaooj.model.vo.QuestionVO;
@@ -44,7 +42,8 @@ public class QuestionController {
     @Resource
     private UserService userService;
 
-    // region 增删改查
+    //专门用来处理JSON数据的，课上我们使用的是FastJson，这里我们使用GSON
+    private final static Gson GSON = new Gson();
 
     /**
      * 创建
@@ -53,7 +52,7 @@ public class QuestionController {
      * @param request
      * @return
      */
-    @RequestMapping("/add")
+    @PostMapping("/add")
     public BaseResponse<Long> addQuestion(@RequestBody QuestionAddRequest questionAddRequest, HttpServletRequest request) {
         if (questionAddRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -62,7 +61,15 @@ public class QuestionController {
         BeanUtils.copyProperties(questionAddRequest, question);
         List<String> tags = questionAddRequest.getTags();
         if (tags != null) {
-            question.setTags(JSONUtil.toJsonStr(tags));
+            question.setTags(GSON.toJson(tags));
+        }
+        List<JudgeCase> judgeCase = questionAddRequest.getJudgeCase();
+        if (judgeCase != null) {
+            question.setJudgeCase(GSON.toJson(judgeCase));
+        }
+        JudgeConfig judgeConfig = questionAddRequest.getJudgeConfig();
+        if (judgeConfig != null) {
+            question.setJudgeConfig(GSON.toJson(judgeConfig));
         }
         questionService.validQuestion(question, true);
         User loginUser = userService.getLoginUser(request);
@@ -82,7 +89,7 @@ public class QuestionController {
      * @param request
      * @return
      */
-    @RequestMapping("/delete")
+    @PostMapping("/delete")
     public BaseResponse<Boolean> deleteQuestion(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -106,7 +113,7 @@ public class QuestionController {
      * @param questionUpdateRequest
      * @return
      */
-    @RequestMapping("/update")
+    @PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> updateQuestion(@RequestBody QuestionUpdateRequest questionUpdateRequest) {
         if (questionUpdateRequest == null || questionUpdateRequest.getId() <= 0) {
@@ -116,7 +123,15 @@ public class QuestionController {
         BeanUtils.copyProperties(questionUpdateRequest, question);
         List<String> tags = questionUpdateRequest.getTags();
         if (tags != null) {
-            question.setTags(JSONUtil.toJsonStr(tags));
+            question.setTags(GSON.toJson(tags));
+        }
+        List<JudgeCase> judgeCase = questionUpdateRequest.getJudgeCase();
+        if (judgeCase != null) {
+            question.setJudgeCase(GSON.toJson(judgeCase));
+        }
+        JudgeConfig judgeConfig = questionUpdateRequest.getJudgeConfig();
+        if (judgeConfig != null) {
+            question.setJudgeConfig(GSON.toJson(judgeConfig));
         }
         // 参数校验
         questionService.validQuestion(question, false);
@@ -136,6 +151,7 @@ public class QuestionController {
      */
     @GetMapping("/get/vo")
     public BaseResponse<QuestionVO> getQuestionVOById(long id, HttpServletRequest request) {
+        System.out.println(id);
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -152,7 +168,7 @@ public class QuestionController {
      * @param questionQueryRequest
      * @return
      */
-    @RequestMapping("/list/page")
+    @PostMapping("/list/page")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<Question>> listQuestionByPage(@RequestBody QuestionQueryRequest questionQueryRequest) {
         long current = questionQueryRequest.getCurrent();
@@ -169,7 +185,7 @@ public class QuestionController {
      * @param request
      * @return
      */
-    @RequestMapping("/list/page/vo")
+    @PostMapping("/list/page/vo")
     public BaseResponse<Page<QuestionVO>> listQuestionVOByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
             HttpServletRequest request) {
         long current = questionQueryRequest.getCurrent();
@@ -188,7 +204,7 @@ public class QuestionController {
      * @param request
      * @return
      */
-    @RequestMapping("/my/list/page/vo")
+    @PostMapping("/my/list/page/vo")
     public BaseResponse<Page<QuestionVO>> listMyQuestionVOByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
             HttpServletRequest request) {
         if (questionQueryRequest == null) {
@@ -205,25 +221,6 @@ public class QuestionController {
         return ResultUtils.success(questionService.getQuestionVOPage(questionPage, request));
     }
 
-    // endregion
-
-    /**
-     * 分页搜索（从 ES 查询，封装类）
-     *
-     * @param questionQueryRequest
-     * @param request
-     * @return
-     */
-    @RequestMapping("/search/page/vo")
-    public BaseResponse<Page<QuestionVO>> searchQuestionVOByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
-            HttpServletRequest request) {
-        long size = questionQueryRequest.getPageSize();
-        // 限制爬虫
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
-        Page<Question> questionPage = questionService.searchFromEs(questionQueryRequest);
-        return ResultUtils.success(questionService.getQuestionVOPage(questionPage, request));
-    }
-
     /**
      * 编辑（用户）
      *
@@ -231,7 +228,7 @@ public class QuestionController {
      * @param request
      * @return
      */
-    @RequestMapping("/edit")
+    @PostMapping("/edit")
     public BaseResponse<Boolean> editQuestion(@RequestBody QuestionEditRequest questionEditRequest, HttpServletRequest request) {
         if (questionEditRequest == null || questionEditRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -240,7 +237,15 @@ public class QuestionController {
         BeanUtils.copyProperties(questionEditRequest, question);
         List<String> tags = questionEditRequest.getTags();
         if (tags != null) {
-            question.setTags(JSONUtil.toJsonStr(tags));
+            question.setTags(GSON.toJson(tags));
+        }
+        List<JudgeCase> judgeCase = questionEditRequest.getJudgeCase();
+        if (judgeCase != null) {
+            question.setJudgeCase(GSON.toJson(judgeCase));
+        }
+        JudgeConfig judgeConfig = questionEditRequest.getJudgeConfig();
+        if (judgeConfig != null) {
+            question.setJudgeConfig(GSON.toJson(judgeConfig));
         }
         // 参数校验
         questionService.validQuestion(question, false);

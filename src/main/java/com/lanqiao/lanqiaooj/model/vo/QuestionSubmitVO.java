@@ -1,31 +1,23 @@
 package com.lanqiao.lanqiaooj.model.vo;
 
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.lanqiao.lanqiaooj.model.dto.questionSubmit.JudgeInfo;
-import com.lanqiao.lanqiaooj.model.entity.Post;
 import com.lanqiao.lanqiaooj.model.entity.QuestionSubmit;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 
 /**
- * 帖子视图
- *
- * 
- * 
+ * 题目提交封装类
+ * @TableName question
  */
 @Data
 public class QuestionSubmitVO implements Serializable {
     /**
      * id
      */
-    @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
@@ -39,7 +31,7 @@ public class QuestionSubmitVO implements Serializable {
     private String code;
 
     /**
-     * 判题信息（json 对象）
+     * 判题信息
      */
     private JudgeInfo judgeInfo;
 
@@ -69,11 +61,6 @@ public class QuestionSubmitVO implements Serializable {
     private Date updateTime;
 
     /**
-     * 是否删除
-     */
-    private Integer isDelete;
-
-    /**
      * 提交用户信息
      */
     private UserVO userVO;
@@ -82,10 +69,6 @@ public class QuestionSubmitVO implements Serializable {
      * 对应题目信息
      */
     private QuestionVO questionVO;
-
-    @TableField(exist = false)
-    private static final long serialVersionUID = 1L;
-
 
     /**
      * 包装类转对象
@@ -123,4 +106,5 @@ public class QuestionSubmitVO implements Serializable {
         return questionSubmitVO;
     }
 
+    private static final long serialVersionUID = 1L;
 }
