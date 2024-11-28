@@ -1,22 +1,14 @@
 package com.lanqiao.lanqiaooj.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.lanqiao.lanqiaooj.annotation.AuthCheck;
 import com.lanqiao.lanqiaooj.common.BaseResponse;
 import com.lanqiao.lanqiaooj.common.ErrorCode;
 import com.lanqiao.lanqiaooj.common.ResultUtils;
-import com.lanqiao.lanqiaooj.constant.UserConstant;
 import com.lanqiao.lanqiaooj.exception.BusinessException;
-import com.lanqiao.lanqiaooj.exception.ThrowUtils;
-import com.lanqiao.lanqiaooj.model.dto.post.PostQueryRequest;
-import com.lanqiao.lanqiaooj.model.dto.question.QuestionQueryRequest;
 import com.lanqiao.lanqiaooj.model.dto.questionSubmit.QuestionSubmitAddRequest;
 import com.lanqiao.lanqiaooj.model.dto.questionSubmit.QuestionSubmitQueryRequest;
-import com.lanqiao.lanqiaooj.model.entity.Post;
-import com.lanqiao.lanqiaooj.model.entity.Question;
 import com.lanqiao.lanqiaooj.model.entity.QuestionSubmit;
 import com.lanqiao.lanqiaooj.model.entity.User;
-import com.lanqiao.lanqiaooj.model.vo.PostVO;
 import com.lanqiao.lanqiaooj.model.vo.QuestionSubmitVO;
 import com.lanqiao.lanqiaooj.service.QuestionSubmitService;
 import com.lanqiao.lanqiaooj.service.PostService;
@@ -37,7 +29,7 @@ import javax.servlet.http.HttpServletRequest;
  *
  */
 @RestController
-@RequestMapping("/question_submit")
+@RequestMapping("/question/question_submit")
 @Slf4j
 public class QuestionSubmitController {
 
