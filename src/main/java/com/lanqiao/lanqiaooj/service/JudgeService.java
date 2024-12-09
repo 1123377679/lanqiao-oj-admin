@@ -1,5 +1,6 @@
 package com.lanqiao.lanqiaooj.service;
 
+import com.lanqiao.lanqiaooj.model.entity.QuestionSubmit;
 import com.lanqiao.lanqiaooj.model.vo.QuestionSubmitVO;
 
 /**
@@ -13,5 +14,5 @@ public interface JudgeService {
      * @param questionSubmitId
      * @return
      */
-    QuestionSubmitVO doJudge(long questionSubmitId);
+    QuestionSubmit doJudge(long questionSubmitId);
 }

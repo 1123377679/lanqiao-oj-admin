@@ -8,6 +8,10 @@ import com.lanqiao.lanqiaooj.judge.codesandbox.CodeSandboxFactory;
 import com.lanqiao.lanqiaooj.judge.codesandbox.CodeSandboxProxy;
 import com.lanqiao.lanqiaooj.judge.codesandbox.model.ExecuteCodeRequest;
 import com.lanqiao.lanqiaooj.judge.codesandbox.model.ExecuteCodeResponse;
+import com.lanqiao.lanqiaooj.judge.codesandbox.model.JudgeContext;
+import com.lanqiao.lanqiaooj.judge.codesandbox.model.JudgeManager;
+import com.lanqiao.lanqiaooj.judge.codesandbox.strategy.DefaultJudgeStrategy;
+import com.lanqiao.lanqiaooj.judge.codesandbox.strategy.JudgeStrategy;
 import com.lanqiao.lanqiaooj.model.dto.question.JudgeCase;
 import com.lanqiao.lanqiaooj.model.dto.question.JudgeConfig;
 import com.lanqiao.lanqiaooj.model.dto.questionSubmit.JudgeInfo;
@@ -22,6 +26,7 @@ import com.lanqiao.lanqiaooj.service.QuestionService;
 import com.lanqiao.lanqiaooj.service.QuestionSubmitService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
@@ -33,6 +38,7 @@ import java.util.stream.Collectors;
  * @ Date: 2024/12/03/14:36
  * @ Description:
  */
+@Service
 public class judgeServiceImpl implements JudgeService {
     @Resource
     private QuestionService questionService;
@@ -40,12 +46,15 @@ public class judgeServiceImpl implements JudgeService {
     @Resource
     private QuestionSubmitService questionSubmitService;
 
+    @Resource
+    private JudgeManager judgeManager;
+
     @Value("${codesandbox.type:example}")
     private String type;
 
 
     @Override
-    public QuestionSubmitVO doJudge(long questionSubmitId) {
+    public QuestionSubmit doJudge(long questionSubmitId) {
         //1.传入题目的提交id，获取到对应的题目，提交信息(代码，编程语言等)
         QuestionSubmit questionSubmit = questionSubmitService.getById(questionSubmitId);
         if (questionSubmit == null) {
@@ -62,7 +71,7 @@ public class judgeServiceImpl implements JudgeService {
         }
         //将题目的状态设置成判题中 防止重复提交
         QuestionSubmit questionSubmitUpdate = new QuestionSubmit();
-        questionSubmitUpdate.setId(questionId);
+        questionSubmitUpdate.setId(questionSubmitId);
         questionSubmitUpdate.setStatus(QuestionSubmitStatusEnum.RUNNING.getValue());
         //通过数据库进行修改
         boolean update = questionSubmitService.updateById(questionSubmitUpdate);
@@ -90,35 +99,28 @@ public class judgeServiceImpl implements JudgeService {
         //根据沙箱的执行结果，设置题目的判题状态和信息
         //输出用例要跟输入用例
         List<String> outputList = executeCodeResponse.getOutputList();
-        JudgeInfoMessageEnum judgeInfoMessageEnum = JudgeInfoMessageEnum.WAITING;
-        if (outputList.size()!=inputList.size()){
-            judgeInfoMessageEnum = JudgeInfoMessageEnum.WRONG_ANSWER;
+        JudgeContext judgeContext = new JudgeContext();
+        judgeContext.setJudgeInfo(executeCodeResponse.getJudgeInfo());
+        judgeContext.setInputList(inputList);
+        judgeContext.setOutputList(outputList);
+        judgeContext.setJudgeCaseList(judgeCaseList);
+        judgeContext.setQuestion(question);
+        judgeContext.setQuestionSubmit(questionSubmit);
+        //换成judgeManager
+        JudgeInfo judgeInfo = judgeManager.doJudge(judgeContext);
+        //将题目的状态设置成判题中 防止重复提交
+        questionSubmitUpdate = new QuestionSubmit();
+        questionSubmitUpdate.setId(questionSubmitId);
+        questionSubmitUpdate.setStatus(QuestionSubmitStatusEnum.RUNNING.getValue());
+        questionSubmitUpdate.setJudgeInfo(JSONUtil.toJsonStr(judgeInfo));
+        //通过数据库进行修改
+        update = questionSubmitService.updateById(questionSubmitUpdate);
+        //判断当前代码是否修改成功
+        if (!update){
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"题目状态更新错误");
         }
-        for (int i = 0 ; i<judgeCaseList.size();i++){
-            JudgeCase judgeCase = judgeCaseList.get(i);
-            if (!judgeCase.getOutput().equals(outputList.get(i))){
-                judgeInfoMessageEnum = JudgeInfoMessageEnum.WRONG_ANSWER;
-                return null;
-            }
-        }
-        //判断题目限制是否有问题
-        JudgeInfo judgeInfo = executeCodeResponse.getJudgeInfo();
-        //执行完之后的时间
-        Long memory = judgeInfo.getMemory();
-        Long time = judgeInfo.getTime();
-        String judgeConfigStr = question.getJudgeConfig();
-        JudgeConfig judgeConfig = JSONUtil.toBean(judgeConfigStr, JudgeConfig.class);
-        //题目要求的时间
-        Long timeLimit = judgeConfig.getTimeLimit();
-        Long memoryLimit = judgeConfig.getMemoryLimit();
-        if(memory > memoryLimit){
-            judgeInfoMessageEnum = JudgeInfoMessageEnum.MEMORY_LIMIT_EXCEEDED;
-            return null;
-        }
-        if(time > timeLimit){
-            judgeInfoMessageEnum = JudgeInfoMessageEnum.TIME_LIMIT_EXCEEDED;
-            return null;
-        }
-        return null;
+        //再从数据库中查询一下状态
+        QuestionSubmit questionSubmitServiceById = questionSubmitService.getById(questionSubmitId);
+        return questionSubmitServiceById;
     }
 }

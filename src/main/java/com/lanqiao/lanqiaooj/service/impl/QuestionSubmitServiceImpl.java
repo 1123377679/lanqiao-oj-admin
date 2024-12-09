@@ -17,6 +17,7 @@ import com.lanqiao.lanqiaooj.model.enums.QuestionSubmitStatusEnum;
 import com.lanqiao.lanqiaooj.model.vo.QuestionSubmitVO;
 import com.lanqiao.lanqiaooj.model.vo.QuestionVO;
 import com.lanqiao.lanqiaooj.model.vo.UserVO;
+import com.lanqiao.lanqiaooj.service.JudgeService;
 import com.lanqiao.lanqiaooj.service.QuestionService;
 import com.lanqiao.lanqiaooj.service.QuestionSubmitService;
 import com.lanqiao.lanqiaooj.mapper.QuestionSubmitMapper;
@@ -25,11 +26,13 @@ import com.lanqiao.lanqiaooj.utils.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +49,10 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
 
     @Resource
     private QuestionService questionService;
+
+    @Resource
+    @Lazy
+    JudgeService judgeService;
 
     /**
      * 提交题目
@@ -82,7 +89,12 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "数据插入失败");
         }
         //判题服务
-        return questionSubmit.getId();
+        Long questionSubmitId = questionSubmit.getId();
+        //异步执行判题服务
+        CompletableFuture.runAsync(()->{
+            judgeService.doJudge(questionSubmitId);
+        });
+        return questionSubmitId;
     }
     /**
      * 获取查询包装类(用户根据那些字段查询，根据前端传来的请求对象，让Mybaits框架支持的查询QueryWrapper类)
