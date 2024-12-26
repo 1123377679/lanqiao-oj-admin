@@ -102,4 +102,4 @@ knife4j:
         api-rule-resources:
           - com.lanqiao.lanqiaooj.controller
 codesandbox:
-  type: example
+  type: remote

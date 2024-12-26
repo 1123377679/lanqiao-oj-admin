@@ -55,7 +55,14 @@ class MainApplicationTests {
         codeSandbox = new CodeSandboxProxy(codeSandbox);
         //接收前端的参数
         //模拟一些数据
-        String code = "int main(){}";
+        String code = "public class Main {\n" +
+                "    public static void main(String[] args) {\n" +
+                "        //实际在OJ系统中，对用户输入的代码一般都会有要求,便于系统的统一处理,我们把用户输入的代码类名限制成Main\n" +
+                "        Integer a = Integer.parseInt(args[0]);\n" +
+                "        Integer b = Integer.parseInt(args[1]);\n" +
+                "        System.out.println(\"结果是:\"+(a+b));\n" +
+                "    }\n" +
+                "}";
         List<String> inputList =  Arrays.asList("1 2", "3 4");
         String language = QuestionSubmitLanguageEnum.JAVA.getValue();
         ExecuteCodeRequest executeCodeRequest = ExecuteCodeRequest.builder()
